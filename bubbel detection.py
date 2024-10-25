@@ -1,5 +1,8 @@
 import cv2
 import numpy as np
+import serial
+
+ser0 = serial.Serial('/dev/ttyUSB0', 115200)
 
 def compute_shapefactor(circles, binary):
     shapefactor_circles = []
@@ -41,10 +44,8 @@ def filter_close_circles(circles, min_count=3, max_distance=30):
 
     return filtered_circles
 
-# Load video
 cap = cv2.VideoCapture('C:\\Users\Jamal\Desktop\\New folder\yazd blue cup\data\pipeline-real.mp4')
 
-# Read the first frame
 ret, prev_frame = cap.read()
 if not ret:
     print("Unable to read video.")
@@ -52,24 +53,19 @@ if not ret:
     cv2.destroyAllWindows()
     exit()
 
-# Convert frame to gray
 prev_gray = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
 
 while True:
-    # Read the next frame
     ret, curr_frame = cap.read()
     if not ret:
         break
 
-    # Convert frame to gray
     curr_gray = cv2.cvtColor(curr_frame, cv2.COLOR_BGR2GRAY)
 
-    # Compute difference between consecutive frames
     diff = cv2.absdiff(prev_gray, curr_gray)
 
     blurred = cv2.GaussianBlur(diff, (5, 5), 0)
 
-    # Convert to binary image
     _, binary = cv2.threshold(blurred, 20, 255, cv2.THRESH_BINARY)
     cv2.imshow('Binary', binary)
 
@@ -77,13 +73,11 @@ while True:
     cleaned = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
     cleaned = cv2.morphologyEx(cleaned, cv2.MORPH_OPEN, kernel)
 
-    # Apply cropping to keep only the top 70% of the frame
     height, width = curr_frame.shape[:2]
     crop_height = int(height * 0.7)
     curr_frame = curr_frame[:crop_height, :]
     cleaned = binary[:crop_height, :]
 
-    # Use Hough Circle Transform to detect bubbles
     circles = cv2.HoughCircles(cleaned, cv2.HOUGH_GRADIENT, dp=1.2, minDist=20,
                                param1=50, param2=30, minRadius=10, maxRadius=50)
 
@@ -97,16 +91,14 @@ while True:
             for (x, y, r) in group:
                 cv2.circle(curr_frame, (x, y), r, (0, 0, 255), 4)
 
-    # Show the result
     cv2.imshow('Detected Bubbles', curr_frame)
 
-    # Update the previous frame
     prev_gray = curr_gray
 
-    # Exit loop on 'q'
     if cv2.waitKey(1) & 0xFF == ord('q'):
+        response = "f"
+        ser0.write(response.encode())
         break
 
-# Release resources
 cap.release()
 cv2.destroyAllWindows()
