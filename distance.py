@@ -80,9 +80,9 @@ while True:
                         if initial_area is None:
                             initial_area = area
                         elif area < initial_area:
-                            print("دور شد")
+                            print("w")
                         elif area > initial_area:
-                            print("نزدیک شد")
+                            print("s")
 
                         cv2.drawContours(frame, [c], -1, (0, 255, 0), 2)
 
