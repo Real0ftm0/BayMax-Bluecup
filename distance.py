@@ -10,7 +10,6 @@ target_color = None
 initial_area = None
 
 def get_dominant_color(hsv_frame, mask):
-    """ استخراج رنگ غالب از ماسک """
     masked_frame = cv2.bitwise_and(hsv_frame, hsv_frame, mask=mask)
     hist = cv2.calcHist([masked_frame], [0], mask, [180], [0, 180])
     dominant_color = np.argmax(hist)
@@ -24,10 +23,8 @@ while True:
 
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    # جدا کردن کانال‌های HSV
     h, s, v = cv2.split(hsv)
 
-    # اعمال فیلتر دوطرفه و بلور
     denoised_img1 = cv2.bilateralFilter(h, 9, 20, 20)
     denoised_img2 = cv2.bilateralFilter(s, 9, 20, 20)
     denoised_img3 = cv2.bilateralFilter(v, 9, 20, 20)
@@ -58,7 +55,6 @@ while True:
                     dominant_color = get_dominant_color(hsv, mask)
                     object_data.append((area, dominant_color))
 
-    # بعد از فریم ۱۰، جسمی که بیشترین تکرار را داشته دنبال شود
     if frame_count == 30:
         color_counts = {}
         for area, color in object_data:
@@ -68,7 +64,6 @@ while True:
                 color_counts[color] = 1
         target_color = max(color_counts, key=color_counts.get)
 
-    # ردیابی جسم هدف
     if frame_count > 30 and target_color is not None:
         for i in range(1, num_labels):
             x, y, w, h, area = stats[i]
@@ -82,7 +77,6 @@ while True:
                     dominant_color = get_dominant_color(hsv, mask)
 
                     if dominant_color == target_color:
-                        # بررسی کوچک یا بزرگ شدن جسم
                         if initial_area is None:
                             initial_area = area
                         elif area < initial_area:
